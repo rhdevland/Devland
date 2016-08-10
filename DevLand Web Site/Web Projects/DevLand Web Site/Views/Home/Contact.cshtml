@@ -1,0 +1,128 @@
+﻿<!-- Contact Section -->
+<section id="contact">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <h2 class="section-heading">Contact Us</h2>
+                <h3 class="section-subheading text-muted">When everything seems to be going against you, remember that the airplane takes off against the wind, not with it. <br /> – Henry Ford</h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <form name="sentMessage" id="contactForm" novalidate>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Your Name *" id="name">
+                            </div>
+                            <div class="form-group">
+                                <input type="email" class="form-control" placeholder="Your Email *" id="email">
+                            </div>
+                            <div class="form-group">
+                                <input type="tel" class="form-control" placeholder="Your Phone *" id="phone">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <textarea class="form-control" placeholder="Your Message *" id="message"></textarea>
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-lg-12 text-center">
+                            <div id="success"></div>
+                            <button type="button" class="btn btn-xl" onclick="sendMessage();">Send Message</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section scripts {
+    <script type="text/javascript">
+        function clearForm() {
+            $("#name").val('');
+            $("#email").val('');
+            $("#phone").val('');
+            $("#message").val('');
+        }
+
+        function sendMessage() {
+            var isValid = true;
+            var errors = '';
+
+            $("#name").parent().removeClass("has-warning");
+            $("#email").parent().removeClass("has-warning");
+            $("#phone").parent().removeClass("has-warning");
+            $("#message").parent().removeClass("has-warning");
+
+            var request = {
+                name: $("#name").val(),
+                email: $("#email").val(),
+                phone: $("#phone").val(),
+                message: $("#message").val()
+            }
+
+            if (request.name === '') {
+                errors += errors != '' ? '<br />' : '';
+                errors += 'Please enter a name.';
+                $("#name").parent().addClass("has-warning");
+                isValid = false;
+            }
+            if ((request.email === '') && (request.phone === '')) {
+                errors += errors != '' ? '<br />' : '';
+                errors += 'Please enter an email or a phone number to contact you back.';
+                $("#email").parent().addClass("has-warning");
+                $("#phone").parent().addClass("has-warning");
+                isValid = false;
+            }
+            if (request.email !== '') {
+                if (!validEmail(request.email)) {
+                    errors += errors != '' ? '<br />' : '';
+                    errors += 'Please enter a valid email.';
+                    $("#email").parent().addClass("has-warning");
+                    isValid = false;
+                }
+            }
+            if (request.message === '') {
+                errors += errors != '' ? '<br />' : '';
+                errors += 'Please enter the message to be sent.';
+                $("#message").parent().addClass("has-warning");
+                isValid = false;
+            }
+
+            if (errors != '') {
+                toastr.warning(errors);
+            }
+
+            if (isValid) {
+                showWaitDialog('Sending Email...');
+
+                $.ajax({
+                    type: "POST",
+                    url: '/Home/SendEmail',
+                    contentType: 'application/json; charset=utf-8;',
+                    data: JSON.stringify({ emailModel: request }),
+                    dataType: 'json',
+                    cache: false,
+                    success: function (response) {
+                        hideWaitDialog();
+                        console.log(response);
+                        if (response.indexOf("Success") > -1) {
+                            clearForm();
+                            toastr.info("Your message has been sent. We will be contacting you shortly.");
+                        } else {
+                            toastr.error("An error ocurred while processing your request. Please try again later.");
+                        }
+                    },
+                    error: function (xhr, statusText, thrownError) {
+                        console.log(xhr);
+                        console.log(statusText);
+                        console.log(thrownError);
+                    }
+                });
+            }
+        }
+    </script>
+}
